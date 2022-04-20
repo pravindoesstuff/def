@@ -27,7 +27,6 @@ int main(int argc, char **argv) {
         read_input(input);
     } else if (argc == 2) {
         process_arg(input, argv[1]);
-        free(argv[1]);
     } else {
         perror("Too many arguments!\n");
         exit(EXIT_FAILURE);
@@ -85,7 +84,7 @@ void load_url(char *url, char *buf) {
 }
 
 int write_fn(char *ptr, size_t size, size_t nmemb, void *userdata) {
-    strncpy(userdata, ptr, size * nmemb);
+    memcpy(userdata, ptr, size * nmemb);
     return 0;
 }
 
