@@ -4,68 +4,90 @@
 #include <curl/curl.h>
 #include <ctype.h>
 #include <stdlib.h>
+#include "jsmn.h"
 
 #define MAX_INPUT_LEN 100
 #define DATA_SIZE 10000
+#define NUM_TOKENS 128
 #define URL_BASE "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
-write_fn(void *ptr, size_t size, size_t nmemb, void *stream);
+int write_fn(char *ptr, size_t size, size_t nmemb, void *userdata);
+
 bool all_alpha(char *input);
+
+void read_input(char *input);
+
+void process_arg(char *input, char *arg);
+
+void load_url(char *url, char *buf);
 
 int main(int argc, char **argv) {
     char input[MAX_INPUT_LEN];
     if (argc == 1) {
-        printf("Lookup word: ");
-        // Copy stdin into input (restricted by MAX_INPUT_LEN)
-        fgets(input, MAX_INPUT_LEN, stdin);
-        // Find '\n' char in input
-        char *newline = strchr(input, '\n');
-        // If '\n' doesn't appear, then there is remaining
-        // data in stdin, that is relevant to the lookup input
-        if (newline == NULL) {
-            perror("Input was too long!\n");
-        } else {
-            // Terminate at the newline
-            *newline = '\0';
-        }
+        read_input(input);
     } else if (argc == 2) {
-        if (strlen(argv[1]) > MAX_INPUT_LEN) {
-            perror("Input was too long!\n");
-            return 1;
-        }
-        // Copy the 1st argument into input
-        strncpy(input, argv[1], MAX_INPUT_LEN);
+        process_arg(input, argv[1]);
+        free(argv[1]);
     } else {
         perror("Too many arguments!\n");
-        return 2;
+        exit(EXIT_FAILURE);
     }
 
     if (!all_alpha(input)) {
         perror("The input contained invalid characters!\n");
-        return 1;
+        exit(EXIT_FAILURE);
     }
 
-    // Build url
     char url[sizeof(URL_BASE) + MAX_INPUT_LEN] = URL_BASE;
-    char data[DATA_SIZE];
     strcat(url, input);
-    // Define handle for curl to use
+
+    char json[DATA_SIZE];
+    load_url(url, json);
+
+    printf("%s", json);
+    jsmn_parser p;
+    jsmntok_t t[NUM_TOKENS];
+    jsmn_init(&p);
+    jsmn_parse(&p, json, strlen(json), t, NUM_TOKENS);
+}
+
+void read_input(char *input) {
+    printf("Lookup word: ");
+    fgets(input, MAX_INPUT_LEN, stdin);
+
+    char *newline_ptr = strchr(input, '\n');
+    if (newline_ptr == NULL) {
+        perror("Input was too long!\n");
+        exit(EXIT_FAILURE);
+    } else {
+        *newline_ptr = '\0';
+    }
+}
+
+void process_arg(char *input, char *arg) {
+    if (strlen(arg) > MAX_INPUT_LEN) {
+        perror("Input was too long!\n");
+        exit(EXIT_FAILURE);
+    }
+    // Copy the 1st argument into input
+    strncpy(input, arg, MAX_INPUT_LEN);
+}
+
+void load_url(char *url, char *buf) {
     CURL *handle = curl_easy_init();
-    // Add url to the handle
+
     curl_easy_setopt(handle, CURLOPT_URL, url);
     curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, write_fn);
-    curl_easy_setopt(handle, CURLOPT_WRITEDATA, data);
+    curl_easy_setopt(handle, CURLOPT_WRITEDATA, buf);
 
-    // Perform the transfer on handle
     curl_easy_perform(handle);
     curl_easy_cleanup(handle);
 }
 
-/// Custom write function for curl (stolen from: https://stackoverflow.com/questions/2329571/c-libcurl-get-output-into-a-string)
-write_fn(void *ptr, size_t size, size_t nmemb, void *stream){
-    strncpy(stream, ptr, size*nmemb);
+int write_fn(char *ptr, size_t size, size_t nmemb, void *userdata) {
+    strncpy(userdata, ptr, size * nmemb);
+    return 0;
 }
-
 
 bool all_alpha(char *input) {
     while (*input != '\0') {
