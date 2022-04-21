@@ -4,11 +4,10 @@
 #include <curl/curl.h>
 #include <ctype.h>
 #include <stdlib.h>
-#include "jsmn.h"
+#include "cJSON.h"
 
 #define MAX_INPUT_LEN 100
 #define DATA_SIZE 10000
-#define NUM_TOKENS 128
 #define URL_BASE "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
 int write_fn(char *ptr, size_t size, size_t nmemb, void *userdata);
@@ -40,14 +39,21 @@ int main(int argc, char **argv) {
     char url[sizeof(URL_BASE) + MAX_INPUT_LEN] = URL_BASE;
     strcat(url, input);
 
-    char json[DATA_SIZE];
-    load_url(url, json);
+    char json_raw[DATA_SIZE];
+    load_url(url, json_raw);
 
-    printf("%s", json);
-    jsmn_parser p;
-    jsmntok_t t[NUM_TOKENS];
-    jsmn_init(&p);
-    jsmn_parse(&p, json, strlen(json), t, NUM_TOKENS);
+    cJSON *json = cJSON_Parse(json_raw);
+    printf("%s", cJSON_Print(json));
+
+    cJSON *definition_array = cJSON_GetArrayItem(json->child, 0);
+    if (definition_array == NULL) {
+        perror("Could not find that word!");
+        exit(-2);
+    } else {
+
+    }
+
+    cJSON_Delete(json);
 }
 
 void read_input(char *input) {
