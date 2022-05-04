@@ -10,6 +10,8 @@
 #define DATA_SIZE 10000
 #define URL_BASE "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
+void print_json(cJSON *json);
+
 int write_fn(char *ptr, size_t size, size_t nmemb, void *userdata);
 
 bool all_alpha(char *input);
@@ -43,17 +45,21 @@ int main(int argc, char **argv) {
     load_url(url, json_raw);
 
     cJSON *json = cJSON_Parse(json_raw);
-    printf("%s", cJSON_Print(json));
 
-    cJSON *definition_array = cJSON_GetArrayItem(json->child, 0);
-    if (definition_array == NULL) {
+    cJSON *word = cJSON_GetObjectItem(json->child, "word");
+    if (word == NULL) {
         perror("Could not find that word!");
         exit(-2);
     } else {
-
+	print_json(json->child);
     }
 
     cJSON_Delete(json);
+}
+
+void print_json(cJSON *json) {
+	cJSON *phonetic = cJSON_GetObjectItem(json->child, "phonetic");
+	printf("%s", phonetic->valuestring);
 }
 
 void read_input(char *input) {
