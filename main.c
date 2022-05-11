@@ -1,6 +1,7 @@
-#include "cJSON.h"
-#include <ctype.h>
 #include <curl/curl.h>
+#include <cjson/cJSON.h>
+
+#include <ctype.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
