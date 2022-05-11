@@ -11,7 +11,7 @@
 #define DATA_SIZE 10000
 #define URL_BASE "https://api.dictionaryapi.dev/api/v2/entries/en/"
 
-void print_json(cJSON *json);
+void print_json(const cJSON *json);
 
 int write_fn(char *ptr, size_t size, size_t nmemb, void *userdata);
 
@@ -19,9 +19,9 @@ bool all_alpha(char *input);
 
 void read_input(char *input);
 
-void process_arg(char *input, char *arg);
+void process_arg(char *input, const char *arg);
 
-void load_url(char *url, char *buf);
+void load_url(const char *url, char *buf);
 
 int main(int argc, char **argv) {
   char input[MAX_INPUT_LEN];
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
   cJSON_Delete(json);
 }
 
-void print_json(cJSON *json) {
+void print_json(const cJSON *json) {
   cJSON *phonetic = cJSON_GetObjectItem(json, "phonetic");
   if (phonetic) {
     printf("Phonetic: %s\n", phonetic->valuestring);
@@ -107,7 +107,7 @@ void read_input(char *input) {
   }
 }
 
-void process_arg(char *input, char *arg) {
+void process_arg(char *input, const char *arg) {
   if (strlen(arg) > MAX_INPUT_LEN) {
     perror("Input was too long!\n");
     exit(EXIT_FAILURE);
@@ -116,7 +116,7 @@ void process_arg(char *input, char *arg) {
   strncpy(input, arg, MAX_INPUT_LEN);
 }
 
-void load_url(char *url, char *buf) {
+void load_url(const char *url, char *buf) {
   CURL *handle = curl_easy_init();
 
   curl_easy_setopt(handle, CURLOPT_URL, url);
