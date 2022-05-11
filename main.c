@@ -79,12 +79,16 @@ void print_json(cJSON *json) {
     cJSON *meaning;
     cJSON_ArrayForEach(meaning, meanings) {
       cJSON *part_of_speech = cJSON_GetObjectItem(meaning, "partOfSpeech");
-      printf("Part of speech: %s\n", part_of_speech->valuestring);
+      printf("\nPart of speech: %s\n", part_of_speech->valuestring);
       cJSON *definitions = cJSON_GetObjectItem(meaning, "definitions");
       cJSON *definition;
+
+      short def_number = 1;
+
       cJSON_ArrayForEach(definition, definitions) {
-        printf("Definition: %s\n\n",
+        printf("\tDefinition %u: %s\n", def_number,
                cJSON_GetObjectItem(definition, "definition")->valuestring);
+        ++def_number;
       }
     }
   }
