@@ -1,5 +1,5 @@
-#include <curl/curl.h>
 #include <cjson/cJSON.h>
+#include <curl/curl.h>
 
 #include <ctype.h>
 #include <stdbool.h>
@@ -61,15 +61,30 @@ int main(int argc, char **argv) {
 void print_json(cJSON *json) {
   cJSON *phonetic = cJSON_GetObjectItem(json, "phonetic");
   if (phonetic) {
-    printf("Phonetic: %s", phonetic->valuestring);
+    printf("Phonetic: %s\n", phonetic->valuestring);
   } else {
     cJSON *phonetics = cJSON_GetObjectItem(json, "phonetics");
     cJSON *region;
     cJSON_ArrayForEach(region, phonetics) {
       cJSON *text = cJSON_GetObjectItem(region, "text");
       if (text) {
-        printf("Phonetic: %s", text->valuestring);
+        printf("Phonetic: %s\n", text->valuestring);
         break;
+      }
+    }
+  }
+
+  cJSON *meanings = cJSON_GetObjectItem(json, "meanings");
+  if (meanings) {
+    cJSON *meaning;
+    cJSON_ArrayForEach(meaning, meanings) {
+      cJSON *part_of_speech = cJSON_GetObjectItem(meaning, "partOfSpeech");
+      printf("Part of speech: %s\n", part_of_speech->valuestring);
+      cJSON *definitions = cJSON_GetObjectItem(meaning, "definitions");
+      cJSON *definition;
+      cJSON_ArrayForEach(definition, definitions) {
+        printf("Definition: %s\n\n",
+               cJSON_GetObjectItem(definition, "definition")->valuestring);
       }
     }
   }
