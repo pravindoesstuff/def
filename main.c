@@ -30,12 +30,12 @@ int main(int argc, char **argv) {
   } else if (argc == 2) {
     process_arg(input, argv[1]);
   } else {
-    perror("Too many arguments!\n");
+    fprintf(stderr, "Too many arguments!\n");
     exit(EXIT_FAILURE);
   }
 
   if (!all_alpha(input)) {
-    perror("The input contained invalid characters!\n");
+    fprintf(stderr, "The input contained invalid characters!\n");
     exit(EXIT_FAILURE);
   }
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 
   cJSON *word = cJSON_GetObjectItem(json->child, "word");
   if (word == NULL) {
-    perror("Could not find that word!");
+    fprintf(stderr, "Could not find that word!");
     exit(-2);
   } else {
     print_json(json->child);
@@ -60,15 +60,16 @@ int main(int argc, char **argv) {
 
 void print_json(const cJSON *json) {
   cJSON *phonetic = cJSON_GetObjectItem(json, "phonetic");
+  cJSON *word = cJSON_GetObjectItem(json, "word");
   if (phonetic) {
-    printf("Phonetic: %s\n", phonetic->valuestring);
+    printf("%s: %s\n", word->valuestring, phonetic->valuestring);
   } else {
     cJSON *phonetics = cJSON_GetObjectItem(json, "phonetics");
     cJSON *region;
     cJSON_ArrayForEach(region, phonetics) {
       cJSON *text = cJSON_GetObjectItem(region, "text");
       if (text) {
-        printf("Phonetic: %s\n", text->valuestring);
+        printf("%s: %s\n", word->valuestring, text->valuestring);
         break;
       }
     }
@@ -77,16 +78,19 @@ void print_json(const cJSON *json) {
   cJSON *meanings = cJSON_GetObjectItem(json, "meanings");
   if (meanings) {
     cJSON *meaning;
+    ushort phonetic_number = 1;
     cJSON_ArrayForEach(meaning, meanings) {
       cJSON *part_of_speech = cJSON_GetObjectItem(meaning, "partOfSpeech");
-      printf("\nPart of speech: %s\n", part_of_speech->valuestring);
+      printf("\n\x1b[3%um(%s)\033[0m\n", phonetic_number,
+             part_of_speech->valuestring);
+      ++phonetic_number;
       cJSON *definitions = cJSON_GetObjectItem(meaning, "definitions");
       cJSON *definition;
 
-      short def_number = 1;
+      ushort def_number = 1;
 
       cJSON_ArrayForEach(definition, definitions) {
-        printf("\tDefinition %u: %s\n", def_number,
+        printf("Definition %u: %s\n", def_number,
                cJSON_GetObjectItem(definition, "definition")->valuestring);
         ++def_number;
       }
@@ -100,7 +104,7 @@ void read_input(char *input) {
 
   char *newline_ptr = strchr(input, '\n');
   if (newline_ptr == NULL) {
-    perror("Input was too long!\n");
+    fprintf(stderr, "Input was too long!\n");
     exit(EXIT_FAILURE);
   } else {
     *newline_ptr = '\0';
@@ -109,7 +113,7 @@ void read_input(char *input) {
 
 void process_arg(char *input, const char *arg) {
   if (strlen(arg) > MAX_INPUT_LEN) {
-    perror("Input was too long!\n");
+    fprintf(stderr, "Input was too long!\n");
     exit(EXIT_FAILURE);
   }
   // Copy the 1st argument into input
